@@ -1,5 +1,6 @@
 import {IInputs, IOutputs} from "./generated/ManifestTypes";
 import axios from "axios";
+import { Guid } from "guid-typescript";
 
 export class AddressFinder implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
@@ -24,6 +25,9 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 
 		private _errorMessage : HTMLInputElement;
 
+
+		private _context : ComponentFramework.Context<IInputs>;
+
 	/**
 	 * Empty constructor.
 	 */
@@ -42,6 +46,8 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 	 */
 	public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container:HTMLDivElement)
 	{
+
+		this._context = context;
 		// Creating the label for the control and setting the relevant values.
 		this.label = document.createElement("input");
 		this.label.setAttribute("type", "label");
@@ -94,7 +100,11 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 	 */
 	public getOutputs(): IOutputs
 	{
-		return {};
+		// custom code goes here - remove the line below and return the correct output
+		let result: IOutputs = {
+			postcode: this._value
+		};
+		return result;
 	}
 
 	/** 
@@ -122,6 +132,7 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 				placeholderDiv.setAttribute("id","palceholder");
 				
 
+			const recordId = Guid.create().toString();
 			const url = `https://addressfinderapi.azurewebsites.net/api/v1/address/search?postCode=${this._value}`;
 		    axios.get(url,{
 				headers: {
@@ -135,9 +146,22 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 					  msfsi_AddressZIPPostalCode : postcode
 					} = response.data;
 
-				let innerDiv = this.BuildFormElement(addressLine1,city,state, postcode , country);
+				this._value = `${addressLine1}${city}`;
+				let innerDiv = this.BuildFormElement(addressLine1,city,state, postcode , country , recordId);
 				placeholderDiv.appendChild(innerDiv);
 				this._container.append(placeholderDiv);
+
+				//create a record using odata 
+				this._context.webAPI.createRecord("account",{
+					name: recordId,
+					address1_postalcode: postcode,
+					address1_country : country ,
+					address1_line1: addressLine1 ,
+					address1_city : city
+				}).then(data => {
+					console.log(data);
+				})
+				.catch(error => console.log(error));
 			})
 			.catch(error => {
 				this._errorMessage = document.createElement("input");
@@ -163,11 +187,12 @@ export class AddressFinder implements ComponentFramework.StandardControl<IInputs
 	   city : string , 
 	   state : string ,
 	   postcode :string , 
-	   country :string  ) : HTMLDivElement{
+	   country :string ,
+	   recordId : string ) : HTMLDivElement{
 		let formElement = document.createElement("div");
 		formElement.setAttribute("id","innerDiv");
 		let para = document.createElement("p");
-		para.innerText = "Address Details  ";
+		para.innerText = `New account created successfully : ${recordId}`;
 		formElement.appendChild(para);
 
 		let line = document.createElement("hr");
