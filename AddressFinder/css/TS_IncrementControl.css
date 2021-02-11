@@ -16,6 +16,13 @@
   color: red;
 }
 
+.LoanManagerComponents\.AddressFinder .success_message_style {
+  color: green;
+}
+
+.LoanManagerComponents\.AddressFinder .error_message_style {
+  color: red;
+}
 .LoanManagerComponents\.AddressFinder input {
   display: block;
   width: 95%;
