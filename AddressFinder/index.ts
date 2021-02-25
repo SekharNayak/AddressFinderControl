@@ -156,14 +156,18 @@ export class AddressFinder
         }
 
         this.updateRecord(curentRecord.name , curentRecord.id.toString(), address );
-        
+      })
+      .then(_ => {
+        const id = (<any>this._context).page.entityId.toString();
+        const name = (<any>this._context).page.entityTypeName;
+        this._context.navigation.openForm({ entityName : name , 
+          entityId : id });
       })
       .catch((error) => {
         console.log(error);
         this.addMessage(error.message , true);
       });
-
-    this._notifyOutputChanged();
+    
   }
 
   /**
@@ -171,6 +175,7 @@ export class AddressFinder
    * @param event
    */
   private onInputBlur(event: Event): void {
+    console.log("On input blur called ");
     this._value = this.label.value;
     this._notifyOutputChanged();
   }
@@ -186,10 +191,7 @@ export class AddressFinder
     })
     .then((data) => {
       console.log(data);
-      this.addMessage("Address found . Please refresh the page for the changes to be reflected " , false)
-      const customEvent = new CustomEvent("done", {bubbles: true});
-      window.dispatchEvent(customEvent);
-      console.log("custom event fired ");
+      this.addMessage("Address found . Please refresh the page for the changes to be reflected " , false);
     })
     .catch((error) => {
       console.log(error);
